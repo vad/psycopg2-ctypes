@@ -1,9 +1,8 @@
 from functools import wraps
-import collections
 
 from psycopg2 import extensions, libpq, tz
-from psycopg2.adapters import quote
 from psycopg2.exceptions import InterfaceError, ProgrammingError
+from psycopg2.extensions.adapters import quote
 
 
 def check_closed(func):
@@ -329,8 +328,7 @@ def _combine_cmd_params(cmd, params, conn):
             raise TypeError("not all arguments converted during string formatting")
         arg_values = tuple(arg_values)
 
-    if arg_values is None:
+    if not arg_values:
         return cmd
-    else:
-        return cmd % arg_values
+    return cmd % arg_values
 
