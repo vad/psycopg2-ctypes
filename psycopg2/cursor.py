@@ -329,5 +329,8 @@ def _combine_cmd_params(cmd, params, conn):
             raise TypeError("not all arguments converted during string formatting")
         arg_values = tuple(arg_values)
 
-    return cmd % arg_values
+    if arg_values is None:
+        return cmd
+    else:
+        return cmd % arg_values
 
