@@ -113,6 +113,10 @@ class TestCursor(TestBase):
         cur = conn.cursor()
         self.assertEqual(conn.encoding, 'UTF8')
         cur.execute(self.ddl4)
+        cur.execute("""
+            SELECT m\xc3\xa9il, \xe6\xb8\xac\xe8\xa9\xa6
+            FROM unicode ORDER BY m\xc3\xa9il DESC
+        """)
         cur.execute(self.xddl4)
         conn.close()
 
@@ -476,6 +480,17 @@ class TestCursor(TestBase):
 
         conn.close()
 
+    def test_unicode_blank(self):
+        import psycopg2
+
+        conn = self.connect()
+        cur = conn.cursor()
+        conn.set_client_encoding("UNICODE")
+        psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+        cur.execute("select %s::text", (u'',))
+        r, = cur.fetchone()
+        conn.close()
+
     def test_unicode_quoting_more(self):
         import psycopg2
 
@@ -657,6 +672,26 @@ class TestCursor(TestBase):
 
         conn.close()
 
+
+    def test_percentage_in_text(self):
+        import psycopg2
+
+        tests = [
+            ("select 6 %% 10", 6),
+            ("select 17 %% 10", 7),
+            ("select '%%'", '%'),
+            ("select '%%%%'", '%%'),
+            ("select '%%%%%%'", '%%%'),
+            ("select 'hello %% world'", "hello % world")]
+
+        conn = self.connect()
+        cur = conn.cursor()
+        for expr, result in tests:
+            cur.execute(expr, {})
+            value = cur.fetchone()[0]
+            self.assertEqual(value, result)
+
+
     def test_connection_attr(self):
         conn = self.connect()
         cur = conn.cursor()
@@ -672,6 +707,7 @@ class TestCursor(TestBase):
         assert cur.name is None
 
         conn.close()
+
 
 class AppTestServerSideCursor(TestBase):
     def test_name_attr(self):
