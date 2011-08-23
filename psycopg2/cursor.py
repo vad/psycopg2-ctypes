@@ -271,8 +271,11 @@ def _combine_cmd_params(cmd, params, conn):
                 "unsupported format character '%s' (0x%x) at index %d" %
                 (format_char, ord(format_char), pos))
 
+    if cmd.find('%') == -1:
+        return cmd % tuple()
 
-    while idx < len(cmd):
+    len_cmd = len(cmd)
+    while idx < len_cmd:
 
         # Escape
         if cmd[idx] == '%' and cmd[idx + 1] == '%':
@@ -287,7 +290,7 @@ def _combine_cmd_params(cmd, params, conn):
             elif named_args_format is None:
                 named_args_format = True
 
-            # Check for incomplate placeholder
+            # Check for incomplete placeholder
             max_lookahead = cmd.find('%', idx + 2)
             end = cmd.find(')', idx + 2, max_lookahead)
             if end < 0:
